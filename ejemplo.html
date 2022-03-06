@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src=" https://unpkg.com/leaflet@1.6.0/dist/leaflet.js "></script>
+    <link rel="stylesheet" href=" https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+
+    <!--Para el control de busqueda-->
+    <script src="leaflet-search-master\src\leaflet-search.js"></script>
+    <link rel="stylesheet" href="leaflet-search-master\src\leaflet-search.css" />
+    <style>
+        #map {
+            width: 100%;
+            height: 580px;
+            box-shadow: 5px 5px 5px #888;
+        }
+    </style>
+    <title>11</title>
+</head>
+
+<body>
+    <div id='map'> </div>
+    <script>
+        //----------------------------------------------------------------------------	   	   
+
+
+
+        //--------------------------clase lmp---------------
+
+        var map = L.map('map', {
+            center: [41.66, -4.72],
+            zoom: 4
+        });
+
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 18,
+            attribution: 'Map data &copy; <ahref="http://openstreetmap.org"> OpenStreetMap</a> contributors,<a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>,Imagery © <a href="http://mapbox.com">Mapbox</a>',
+            id: 'mapbox.light'
+        }).addTo(map);
+
+        //------------------------FUNCION---------------------------------------------
+
+        var owsrootUrl = 'http://localhost:8080/geoserver/ows';
+
+        var defaultParameters = {
+            service: 'WFS',
+            version: '1.0.0',
+            request: 'GetFeature',
+            typeName: 'PROYECTO_CHAIRA:Paises_Mundo',
+            outputFormat: 'application/json'
+        };
+
+        var parameters = L.Util.extend(defaultParameters);
+
+        var URL = owsrootUrl + L.Util.getParamString(parameters);
+        //Para almacena la capa paises en una variable
+        var paisesG = new L.geoJson(null, {
+            //Aplicamos un estilo
+            style: estilo_paises, //{"color":"#2ECCFA","weight":2},	
+            //cuando de click encima se abra el popup
+            onEachFeature: function(feature, layer) {
+                //para poner el popup
+                layer.bindPopup("Has hecho click en " + feature.properties.name_long),
+                    //para poner los eventos
+                    layer.on({
+                        mouseover: highlightFeature, // Evento que se activa al pasar el cursor sobre un objeto
+                        mouseout: resetHighlight, // Evento que se activa al alejar el cursor sobre un objeto
+                        click: zoomToFeature // Evento que se activa al dar click sobre un objeto.
+                    });
+            }
+        });
+        //Funciones de los eventos del mouse
+        function highlightFeature(e) {
+            var layer = e.target;
+            layer.setStyle({
+                fillColor: 'yellow',
+                weight: 5,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.3
+            });
+        }
+        //para que no se quede con los estilos del highlightFeature al quitar el mouse
+        function resetHighlight(e) {
+            paisesG.resetStyle(e.target);
+            info.update();
+        }
+
+        function zoomToFeature(e) {
+            map.fitBounds(e.target.getBounds());
+        }
+
+        //Para cargar la capa en la variable paisesG y agregarlo al mapa
+        function loadGeojson(data) {
+            paisesG.addData(data)
+                //para mostrar en pantalla la capa
+            map.addLayer(paisesG);
+        }
+
+        $.ajax({
+            //la url es la de la capa ha buscar en este caso paises
+            url: URL,
+            dataType: 'json',
+            success: loadGeojson
+        });
+        /*
+        $.ajax({
+        	url: URL,
+        	success: function (data) {
+        		//creamos una nueva capa geojson
+        		var geojson = new L.geoJson(data, {
+        		//Aplicamos un estilo
+        		//style: {"color":"#2ECCFA","weight":2},
+        				style: estilo_paises,
+
+        		//vinculamos un popup mostrando el nombre del país
+        		onEachFeature: function(feature, layer){
+        		layer.bindPopup("Has hecho click en " + feature.properties.name_long);
+        		}}
+        	).addTo(map); }
+        });
+        */ ///////////solo estilo
+        function getColor(d) {
+            return d > 100000000 ? '#800026' :
+                d > 50000000 ? '#BD0026' :
+                d > 20000000 ? '#E31A1C' :
+                d > 10000000 ? '#FC4E2A' :
+                d > 5000000 ? '#FD8D3C' :
+                d > 2000000 ? '#FEB24C' :
+                d > 1000000 ? '#FED976' :
+                '#FFEDA0';
+        };
+
+        function estilo_paises(feature) {
+            return {
+                stroke: 'blue',
+                //fillColor: colorPaises(feature.properties.continent), 
+                fillColor: getColor(feature.properties.pop_est),
+                weight: 2,
+                opacity: 1,
+                //  color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+        };
+        //Para poder usar el buscador en la capa paises
+        var searchControl = new L.Control.Search({
+            //Poner la variable de la capa ha trabajar en este caso paises
+            layer: paisesG,
+            //para buscar por este atributo de la capa paises
+            //name_long 
+            propertyName: 'name_long'
+        });
+        //agregamos el buscador al mapa
+        map.addControl(searchControl);
+    </script>
+</body>
+
+
+</html>

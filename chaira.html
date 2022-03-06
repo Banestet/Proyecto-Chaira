@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <script src=" https://unpkg.com/leaflet@1.6.0/dist/leaflet.js "></script>
+    <link rel="stylesheet" href=" https://unpkg.com/leaflet@1.6.0/dist/leaflet.css" />
+    <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+
+    <!--Para el control de busqueda-->
+    <script src="leaflet-search-master\src\leaflet-search.js"></script>
+    <link rel="stylesheet" href="leaflet-search-master\src\leaflet-search.css" />
+    <!-- PARA EL MINIMAPA-->
+    <link rel="stylesheet" type="text/css" href="Leaflet-MiniMap-master/dist/Control.MiniMap.min.css" />
+    <script src="Leaflet-MiniMap-master/dist/Control.MiniMap.min.js" type="text/javascript"></script>
+
+    <!--popup-->
+
+    <!-- TITULO-->
+    <link rel="stylesheet" href="css/style.css">
+    <title>ZONAS DE RIESGOS E INUNDACIONES</title>
+</head>
+
+<body>
+
+    <div class="descrip">
+        <h1>ZONAS DE RIESGOS E INUNDACIONES </h1><br>
+        <h3>MUNICIPIO CARTAGENA DEL CHAIRA</h3>
+    </div>
+    <div id='map'> </div>
+    <script>
+        var OSM = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: 'Leidy Martinez Sanchez-Jhonny Harleth Jimenez Vargas-Cesar Obregon Sanchez',
+            maxZoom: 18
+        }); //Obtener una capa del OMS
+
+        var peligro_derrame_crudo = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'peligro_derrame_crudo',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+        //---------------------------CAPAS OMS-------------------------------------------------	   	   
+        //INTERSECCIONES 
+
+        var interseccion_inundaciones = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'interseccion_inundaciones',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+        var interseccion_contaminacionhidrica = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'interseccion_contaminacionhidrica',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+        var interseccion_explosion = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'interseccion_explosion',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+
+        //capas priamrias
+        var peligros_por_explosion = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'peligros_por_explosion',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+        var inundaciones = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'inundaciones',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+        var zonas_explosion = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'zonas_explosion',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+        var perimetro = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'proyecto_chaira:perimetro',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+        var rios = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'rios',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+        var u_manzana = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'u_manzana',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+        var drenaje = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'drenaje',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+        var equipamientos_u_sitios_publicos = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'equipamientos_u_sitios_publicos',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+
+        var zona_inundacion = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'zona_inundacion',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+
+        var contaminacion_hidrica = new L.tileLayer.wms("http://localhost:8080/geoserver/wms", {
+            layers: 'contaminacion_hidrica',
+            format: 'image/png',
+            transparent: true,
+            attribution: "NaturalEarth"
+        });
+
+        //-----------------------------------------------------
+        //--------------------------clase lmp---------------
+        var baseMap = {
+            "OSM": OSM
+        }
+
+
+
+        var map = L.map('map', {
+            center: [1.334111, -74.846667],
+            layers: [OSM, peligro_derrame_crudo, u_manzana, rios, equipamientos_u_sitios_publicos, peligros_por_explosion, drenaje, inundaciones, zonas_explosion, zona_inundacion],
+            zoom: 16
+        });
+
+        var overlayMaps = {
+            "rios": rios,
+            "peligro_derrame_crudo": peligro_derrame_crudo,
+            "u_manzana": u_manzana,
+
+            "equipamientos_u_sitios_publicos": equipamientos_u_sitios_publicos,
+            "zona_inundacion": zona_inundacion,
+            "drenaje": drenaje,
+            "zonas_explosion": zonas_explosion,
+            "inundaciones": inundaciones,
+            "interseccion_contaminacionhidrica": interseccion_contaminacionhidrica,
+            "interseccion_explosion": interseccion_explosion,
+            "interseccion_inundaciones": interseccion_inundaciones,
+            "peligros_por_explosion": peligros_por_explosion
+
+        };
+
+        //-------------------------CONTROL DE CAPAS-------------------
+
+        var title = L.control();
+
+        title.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info2');
+            div.innerHTML += '<h2>INGENIERIA DE SISTEMAS</h2><h3>LINEA DE PROFUNDIZACION B</h3><h3>FLORENCIA - CAQUETA</h3><h4>2022</h4>';
+            return div;
+        };
+        title.addTo(map);
+
+        L.control.layers(baseMap, overlayMaps, {
+            collapsed: true,
+            position: 'topleft'
+        }).addTo(map);
+
+
+        //------------------------FUNCION PARA CAPA WFS---------------------------------------------
+
+        var owsrootUrl = 'http://localhost:8080/geoserver/ows';
+
+        var defaultParameters = {
+            service: 'WFS',
+            version: '1.0.0',
+            request: 'GetFeature',
+            typeName: 'PROYECTO_CHAIRA:barrios',
+            outputFormat: 'application/json'
+        };
+
+        var parameters = L.Util.extend(defaultParameters);
+
+        var URL = owsrootUrl + L.Util.getParamString(parameters);
+        //Para almacena la capa barrios en una variable
+        var barriosG = new L.geoJson(null, {
+            //Aplicamos un estilo
+            style: {
+                "color": "#e2591580",
+                "weight": 2,
+                "opacity": 9
+
+            },
+            //cuando de click encima se abra el popup
+            onEachFeature: function(feature, layer) {
+
+                if (feature.properties.inun == 0 && feature.properties.peligro == 0 && feature.properties.hidrica == 0 && feature.properties.peligro == 0) {
+                    layer.bindPopup("Este es el Barrio: " + feature.properties.nombre + "<br>" + "cantidad de manzanas: " + feature.properties.area + "<br>" + "Este barrio se encuentra sin riesgos ");
+                } else {
+                    layer.bindPopup("Este es el Barrio: " + feature.properties.nombre + "<br>" + "cantidad de manzanas: " + feature.properties.area + "<br>" + "Manzanas en riesgo de inundacion: " + feature.properties.inun + "<br>" + "Manzanas en riesgo de Contaminacion Hidrica: " + feature.properties.hidrica + "<br>" +
+                        "Manzanas en riesgo de Explosion: " + feature.properties.peligro);
+
+                }
+
+                //para poner los eventos
+                layer.on({
+                    mouseover: highlightFeature, // Evento que se activa al pasar el cursor sobre un objeto
+                    mouseout: resetHighlight, // Evento que se activa al alejar el cursor sobre un objeto
+                    click: zoomToFeature // Evento que se activa al dar click sobre un objeto.
+                });
+            }
+        });
+        //Funciones de los eventos del mouse
+        function highlightFeature(e) {
+            var layer = e.target;
+            layer.setStyle({
+                fillColor: 'yellow',
+                weight: 5,
+                color: '#666',
+                dashArray: '',
+                fillOpacity: 0.3
+            });
+        }
+        //para que no se quede con los estilos del highlightFeature al quitar el mouse
+        function resetHighlight(e) {
+            barriosG.resetStyle(e.target);
+            info.update();
+        }
+
+        function zoomToFeature(e) {
+            map.fitBounds(e.target.getBounds());
+        }
+
+        //Para cargar la capa en la variable barriosG y agregarlo al mapa
+        function loadGeojson(data) {
+            barriosG.addData(data)
+                //para mostrar en pantalla la capa
+            map.addLayer(barriosG);
+        }
+
+        $.ajax({
+            //la url es la de la capa ha buscar en este caso paises
+            url: URL,
+            dataType: 'json',
+            success: loadGeojson
+        });
+
+        function getColor(d) {
+            return d > 100000000 ? '#800026' :
+                d > 50000000 ? '#BD0026' :
+                d > 20000000 ? '#E31A1C' :
+                d > 10000000 ? '#FC4E2A' :
+                d > 5000000 ? '#FD8D3C' :
+                d > 2000000 ? '#FEB24C' :
+                d > 1000000 ? '#FED976' :
+                '#FFEDA0';
+        };
+
+        function estilo_paises(feature) {
+            return {
+                stroke: 'blue',
+                //fillColor: colorPaises(feature.properties.continent), 
+                fillColor: getColor(feature.properties.pop_est),
+                weight: 2,
+                opacity: 1,
+                //  color: 'white',
+                dashArray: '3',
+                fillOpacity: 0.7
+            };
+        };
+
+
+
+
+
+
+        //-------------------------------BUSCADOR--------------------------------
+        //Para poder usar el buscador en la capa BARRIOS
+        var searchControl = new L.Control.Search({
+            //Poner la variable de la capa ha trabajar en este caso paises
+            layer: barriosG,
+            //para buscar por este atributo de la capa paises
+            //name_long 
+            propertyName: 'nombre'
+        });
+        //agregamos el buscador al mapa
+        map.addControl(searchControl);
+
+
+
+        //----------------------------------MINI MAPA---------------------------
+        //base para el mini mapa
+        var OSM2 = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a>' +
+                'contributors',
+            maxZoom: 18
+        });
+        var miniMap = new L.Control.MiniMap(OSM2, {
+            toggleDisplay: true,
+            minimized: true,
+            position: "bottomleft"
+        }).addTo(map);
+        //---------------------------------CONTROL DE ESCALA--------------------
+        L.control.scale({}).addTo(map);
+
+        //-----------------------------LEYENDA-------------------------------
+        title.addTo(map);
+        /*leyenda*/
+        var legend = L.control({
+            position: 'bottomright'
+        });
+
+        legend.onAdd = function(map) {
+            var div = L.DomUtil.create('div', 'info legend');
+            div.innerHTML +=
+                '<img src="http://localhost:8080/geoserver/wms?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&WIDTH=20&HEIGHT=20&LAYER=PROYECTO_CHAIRA:proyecto_chaira_grupo_capas" alt="legend" width=200px height=450px>';
+            return div;
+        };
+        legend.addTo(map);
+    </script>
+
+
+    <style>
+        .info {
+            width: 200px;
+            height: 450px;
+            background-color: rgba(255, 246, 246, 0.781);
+            top: -20px;
+        }
+    </style>
+</body>
+
+
+</html>
